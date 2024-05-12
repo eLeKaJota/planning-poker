@@ -2,54 +2,89 @@
 <html lang="es">
 <head>
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <title>Planning Poker</title>
+    <title>Pivot Poker</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+<div class="header">
+    <h4 class="text-center">Sala: <span id="room"></span></h4>
+</div>
 <div class="container">
     <div class="row">
-        <div class="col-12">
-            <h4 class="text-center">Sala: <span id="room"></span></h4>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Usuarios</h5>
-                    <ul id="users" class="list-group">
-                    </ul>
+
+        <div class="grid-table">
+            <div></div>
+            <div class="grid-area grid-table-top">
+                <ul id="usersTop" class="list-users-top"></ul>
+            </div>
+            <div></div>
+            <div class="grid-area grid-table-left">
+                <ul id="usersLeft" class="list-users-left"></ul>
+            </div>
+            <div class="grid-area grid-table-center">
+                <div class="grid-table-center-content">
+                    <div class="text-center poker-title">♠️♥️♣️♦️</div>
+                    <button class="btn btn-primary" id="revealVotes">Revelar cartas</button>
+                    <button class="btn btn-primary" id="resetVotes">Nueva ronda</button>
                 </div>
             </div>
+            <div class="grid-area grid-table-right">
+                <ul id="usersRight" class="list-users-right"></ul>
+            </div>
+            <div class="grid-area grid-table-bottom">
+                <ul id="usersBottom" class="list-users-bottom"></ul>
+            </div>
         </div>
     </div>
+    <div id="stats" class="row">
+        <div class="col-12">
+            <div class="stats">
+                <div id="votesCount" class="votes-count"></div>
+                <div id="votesAverage" class="votes-average"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="votesContainer" class="votes-container">
+    <ul class="list-group fibonacci-list">
+        <li class="list-group">
+            <button class="fibonacci-button">0</button>
+        </li>
+        <li class="list-group">
+            <button class="fibonacci-button">1</button>
+        </li>
+        <li class="list-group">
+            <button class="fibonacci-button">2</button>
+        </li>
+        <li class="list-group">
+            <button class="fibonacci-button">3</button>
+        </li>
+        <li class="list-group">
+            <button class="fibonacci-button">5</button>
+        </li>
+        <li class="list-group">
+            <button class="fibonacci-button">8</button>
+        </li>
+        <li class="list-group">
+            <button class="fibonacci-button">13</button>
+        </li>
+        <li class="list-group">
+            <button class="fibonacci-button">🤨</button>
+        </li>
+    </ul>
+</div>
+
+<div id="footer" class="footer">
     <div class="row">
         <div class="col-12">
-            <div class="fibonacci-title">
-                <h4 class="text-center">Puntuación</h4>
-            </div>
-            <ul class="list-group fibonacci-list">
-                <li class="list-group">
-                    <button class="btn btn-primary fibonacci-button">1</button>
-                </li>
-                <li class="list-group">
-                    <button class="btn btn-primary fibonacci-button">2</button>
-                </li>
-                <li class="list-group">
-                    <button class="btn btn-primary fibonacci-button">3</button>
-                </li>
-                <li class="list-group">
-                    <button class="btn btn-primary fibonacci-button">5</button>
-                </li>
-                <li class="list-group">
-                    <button class="btn btn-primary fibonacci-button">8</button>
-                </li>
-                <li class="list-group">
-                    <button class="btn btn-primary fibonacci-button">13</button>
-                </li>
-            </ul>
+            <p class="text-center text-footer">Pivot Poker</p>
         </div>
     </div>
 </div>
@@ -82,7 +117,16 @@
   const name = document.getElementById('name');
   const submitName = document.getElementById('submitName');
   const room = document.getElementById('room');
-  const usersList = document.getElementById('users');
+  const usersTopList = document.getElementById('usersTop');
+  const usersLeftList = document.getElementById('usersLeft');
+  const usersRightList = document.getElementById('usersRight');
+  const usersBottomList = document.getElementById('usersBottom');
+  const votesCount = document.getElementById('votesCount');
+  const votesAverage = document.getElementById('votesAverage');
+  const revealVotes = document.getElementById('revealVotes');
+  const resetVotes = document.getElementById('resetVotes');
+  const votesContainer = document.getElementById('votesContainer');
+  const divStats = document.getElementById('stats');
   const modal = new bootstrap.Modal(document.getElementById('nameModal'), {
     backdrop: 'static',
     keyboard: false,
@@ -91,40 +135,263 @@
 
   let locationPath = window.location.pathname.split('/');
   const roomName = window.location.pathname.split('/');
+  let usersArray = [];
+  let cardReveal = false;
+  let winner = true;
 
   socket.emit('joinRoom', roomName[roomName.length - 1]);
-
-  locationPath = locationPath.map((path) => {
-    if (path === '') {
-      return path;
-    }
-    return path.replace(/-/g, ' ');
-  });
-  locationPath[locationPath.length - 1] = locationPath[locationPath.length - 1].charAt(0).toUpperCase() +
-      locationPath[locationPath.length - 1].slice(1);
-  room.textContent = locationPath[locationPath.length - 1];
   modal.show();
+  divStats.style.display = 'none';
+  votesContainer.style.display = 'flex';
 
-  socket.on('users', (users) => {
-    console.log('users', users);
+  const truncate = (str, n) => {
+    if (str.length <= n) {
+      return str;
+    } else {
+      let subString = str.substr(0, n - 1); // the original check
+      return subString.substr(0, subString.lastIndexOf(' ')) + '...';
+    }
+  };
 
-    usersList.innerHTML = '';
-    users.forEach(user => {
+  const updateUserList = () => {
+    usersTop = usersArray.filter(user => user.seat === 'top').sort();
+    usersLeft = usersArray.filter(user => user.seat === 'left').sort();
+    usersRight = usersArray.filter(user => user.seat === 'right').sort();
+    usersBottom = usersArray.filter(user => user.seat === 'bottom').sort();
+
+    usersTopList.innerHTML = '';
+    usersLeftList.innerHTML = '';
+    usersRightList.innerHTML = '';
+    usersBottomList.innerHTML = '';
+    usersTop.forEach(user => {
       const li = document.createElement('li');
+      const userContent = `<div class="user-table">
+            <div id="userVoteCardTop" class="user-vote">${user.vote}</div>
+            <div class="user-name" title="${user.user}">${truncate(user.user, 20)} ${user.vote !== ''
+          ? '<span class="vote-check">✓</span>'
+          : ''}</div>
+        </div>`;
       li.classList.add('list-group-item');
-      li.textContent = user.user;
-      usersList.appendChild(li);
+      li.innerHTML = userContent;
+
+      const userVoteCard = li.querySelector('#userVoteCardTop');
+      console.log('cardReveal', cardReveal);
+      if (user.vote !== '' && !cardReveal) {
+        userVoteCard.classList.add('user-vote-hidden');
+      }
+      usersTopList.appendChild(li);
     });
+    usersLeft.forEach(user => {
+      const li = document.createElement('li');
+      const userContent = `<div class="user-table">
+            <div id="userVoteCardLeft" class="user-vote">${user.vote}</div>
+            <div class="user-name" title="${user.user}">${truncate(user.user, 20)} ${user.vote !== ''
+          ? '<span class="vote-check">✓</span>'
+          : ''}</div>
+        </div>`;
+      li.classList.add('list-group-item');
+      li.innerHTML = userContent;
+
+      const userVoteCard = li.querySelector('#userVoteCardLeft');
+      console.log('cardReveal', cardReveal);
+      if (user.vote !== '' && !cardReveal) {
+        userVoteCard.classList.add('user-vote-hidden');
+      }
+      usersLeftList.appendChild(li);
+    });
+    usersRight.forEach(user => {
+      const li = document.createElement('li');
+      const userContent = `<div class="user-table">
+            <div id="userVoteCardRight" class="user-vote">${user.vote}</div>
+            <div class="user-name" title="${user.user}">${truncate(user.user, 20)} ${user.vote !== ''
+          ? '<span class="vote-check">✓</span>'
+          : ''}</div>
+        </div>`;
+      li.classList.add('list-group-item');
+      li.innerHTML = userContent;
+
+      const userVoteCard = li.querySelector('#userVoteCardRight');
+      console.log('cardReveal', cardReveal);
+      if (user.vote !== '' && !cardReveal) {
+        userVoteCard.classList.add('user-vote-hidden');
+      }
+      usersRightList.appendChild(li);
+    });
+    usersBottom.forEach(user => {
+      const li = document.createElement('li');
+      const userContent = `<div class="user-table">
+            <div id="userVoteCardBottom" class="user-vote">${user.vote}</div>
+            <div class="user-name" title="${user.user}">${truncate(user.user, 20)} ${user.vote !== ''
+          ? '<span class="vote-check">✓</span>'
+          : ''}</div>
+        </div>`;
+      li.classList.add('list-group-item');
+      li.innerHTML = userContent;
+
+      const userVoteCard = li.querySelector('#userVoteCardBottom');
+      console.log('cardReveal', cardReveal);
+      if (user.vote !== '' && !cardReveal) {
+        userVoteCard.classList.add('user-vote-hidden');
+      }
+      usersBottomList.appendChild(li);
+    });
+  };
+
+  const formatLocationPath = (string) => {
+    const replace = string.replace(/-/g, ' ');
+    return replace.charAt(0).toUpperCase() + replace.slice(1);
+  };
+
+  room.textContent = formatLocationPath(locationPath[locationPath.length - 1]);
+
+  const revealUserVotes = () => {
+    const userVotes = document.getElementsByClassName('user-vote');
+    for (let i = 0; i < userVotes.length; i++) {
+      userVotes[i].classList.remove('user-vote-hide');
+      userVotes[i].classList.remove('user-vote-hidden');
+      userVotes[i].classList.add('user-vote-reveal');
+    }
+
+    renderVotesStats();
+  };
+
+  function getNearestFibonacci(number) {
+    let a = 0;
+    let b = 1;
+    let temp;
+
+    while (b < number) {
+      temp = a;
+      a = b;
+      b = temp + b;
+    }
+    if (Math.abs(number - a) < Math.abs(b - number)) {
+      return a;
+    } else {
+      return b;
+    }
+  }
+
+  const getStats = () => {
+    const votes = {};
+    let votesCount = 0;
+    let votesTotal = 0;
+    let averageVotes = 0;
+    usersArray.forEach(user => {
+      if (user.vote !== '' && user.vote !== '🤨') {
+        votesCount++;
+        votesTotal += parseInt(user.vote);
+        if (votes[user.vote]) {
+          votes[user.vote]++;
+        } else {
+          votes[user.vote] = 1;
+        }
+      }
+    });
+
+    averageVotes = votesTotal / votesCount;
+    averageVotes = getNearestFibonacci(averageVotes);
+
+    return {votesCount, averageVotes, votes};
+  };
+
+  const renderVoteWithCard = (vote, count) => {
+    const voteCount = document.createElement('div');
+    voteCount.classList.add('vote-count');
+    const cardContent = document.createElement('div');
+    cardContent.classList.add('user-vote');
+    cardContent.textContent = vote;
+    voteCount.appendChild(cardContent);
+    const countContent = document.createElement('div');
+    countContent.classList.add('vote-count');
+    countContent.textContent = `${count} Votos`;
+    voteCount.appendChild(countContent);
+    if (winner) {
+      cardContent.classList.add('winner');
+      winner = false;
+    }
+    votesCount.appendChild(voteCount);
+  };
+
+  const renderVotesStats = () => {
+    const {votesCount, averageVotes, votes} = getStats();
+    //order votes by value number and return an array
+    const orderedVotes = Object.entries(votes).sort((a, b) => a[1] - b[1]).reverse();
+
+    const votesCountContent = `<div class="votes-count-content">
+            <h5>Votos</h5>
+            <div class="votes-count-content">
+                ${orderedVotes.map(
+        ([vote, count]) => renderVoteWithCard(vote, count))}
+            </div>
+        </div>`;
+    votesCount.innerHTML = votesCountContent;
+
+    const votesAverageContent = `<div class="votes-average-content">
+            <div class="user-vote average">${averageVotes}</div>
+            <div class="vote-count">Media</div>
+        </div>`;
+
+    votesAverage.innerHTML = votesAverageContent;
+  };
+
+  const checkRevealButton = () => {
+    const canReveal = usersArray.every(user => user.vote !== '') && !cardReveal;
+    if (canReveal) {
+      revealVotes.style.display = 'block';
+    } else {
+      revealVotes.style.display = 'none';
+    }
+  };
+
+  const checkResetButton = () => {
+    if (cardReveal) {
+      resetVotes.style.display = 'block';
+    } else {
+      resetVotes.style.display = 'none';
+    }
+  };
+
+  const checkDivStats = () => {
+    if (cardReveal) {
+      divStats.style.display = 'flex';
+      votesContainer.style.display = 'none';
+    } else {
+      divStats.style.display = 'none';
+      votesContainer.style.display = 'flex';
+    }
+  };
+
+  revealVotes.addEventListener('click', () => {
+    socket.emit('reveal', roomName[roomName.length - 1]);
+  });
+
+  resetVotes.addEventListener('click', () => {
+    socket.emit('reset', roomName[roomName.length - 1]);
+  });
+
+  socket.on('reveal', (reveal) => {
+    cardReveal = reveal;
+    if (cardReveal) {
+      revealUserVotes();
+      revealVotes.style.display = 'none';
+    }
+    checkResetButton();
+    checkDivStats();
+  });
+
+  socket.on('users', ({users, reveal}) => {
+    usersArray = [...users];
+    cardReveal = reveal;
+    console.log('users', usersArray);
+    updateUserList();
+    checkRevealButton();
+    checkResetButton();
+    checkDivStats();
   });
 
   socket.on('vote', ({vote, user}) => {
     console.log('vote', vote, user);
-    const users = usersList.children;
-    for (let i = 0; i < users.length; i++) {
-      if (users[i].textContent === user) {
-        users[i].textContent = user + ' - ' + vote;
-      }
-    }
   });
 
   submitName.addEventListener('click', () => {
@@ -135,9 +402,33 @@
     modal.hide();
   });
 
+  socket.on('reset', ({users, reveal}) => {
+    usersArray = [...users];
+    updateUserList();
+    cardReveal = reveal;
+    revealVotes.textContent = 'Revelar cartas';
+    for (let i = 0; i < buttons.length; i++) {
+      buttons[i].classList.remove('fibonacci-button-selected');
+    }
+    revealVotes.style.display = 'block';
+    resetVotes.style.display = 'none';
+    divStats.style.display = 'none';
+    winner = true;
+    votesCount.innerHTML = '';
+    checkRevealButton();
+    checkResetButton();
+    checkDivStats();
+  });
+
   for (let i = 0; i < buttons.length; i++) {
     buttons[i].addEventListener('click', () => {
-      socket.emit('vote', {room: roomName[roomName.length - 1], vote: buttons[i].textContent, user: name.value});
+      buttons[i].classList.add('fibonacci-button-selected');
+      for (let j = 0; j < buttons.length; j++) {
+        if (buttons[j] !== buttons[i]) {
+          buttons[j].classList.remove('fibonacci-button-selected');
+        }
+      }
+      socket.emit('vote', {room: roomName[roomName.length - 1], vote: buttons[i].textContent});
     });
   }
 

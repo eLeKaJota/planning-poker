@@ -1,17 +1,335 @@
+.header {
+    background-color: #082146;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+
+}
+
+.footer {
+    background-color: #082146;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+.text-footer {
+    color: #fff;
+    font-size: 0.8em;
+    margin: 0;
+}
+
+/* Vote list */
 .fibonacci-list {
     display: flex;
     flex-direction: row;
     gap: 2rem;
     justify-content: center;
-    margin-top: 20px;
 }
 
 .fibonacci-button {
     width: 50px;
-    height: 50px;
+    height: 75px;
+    border: 1px solid #082146;
+    background-color: #fff;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #082146;
+    transition: transform 250ms;
+}
+
+.fibonacci-button:hover {
+    cursor: pointer;
+    background-color: #082146;
+    color: #fff;
+    transform: translateY(-5px);
+}
+
+.fibonacci-button:active {
+    cursor: pointer;
+    background-color: #082146;
+    color: #fff;
+    transform: translateY(-5px);
+}
+
+.fibonacci-button-selected {
+    transform: translateY(-10px);
+    color: #fff;
+    font-weight: bold;
+    background-color: #082146;
 }
 
 .fibonacci-title {
     text-align: center;
     margin-top: 20px;
+}
+
+/* Game board */
+
+.user-table {
+    width: 100px;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 8px;
+}
+
+.user-vote {
+    width: 50px;
+    height: 75px;
+    border: 1px solid #082146;
+    background-color: #fff;
+    font-weight: bold;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #082146;
+}
+
+.votes-count {
+    font-size: 1.2em;
+    font-weight: 500;
+    color: #082146;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 1rem;
+}
+
+.vote-count {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.votes-count-content {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+
+.winner {
+    width: 65px;
+    height: 90px;
+    background-color: #365C78;
+    color: white;
+    font-size: 36px;
+}
+
+.average {
+    width: 65px;
+    height: 90px;
+    background-color: #367866;
+    color: white;
+    font-size: 36px;
+}
+
+.stats {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 20%;
+    align-items: flex-end;
+}
+
+@keyframes reveal-card {
+    0% {
+        transform: rotateY(180deg);
+        background-color: #082146;
+        /*background-image: url("/img/bbva-api-market.svg");*/
+        background-size: 45px;
+        background-repeat: no-repeat;
+        background-position: center;
+        color: rgba(8, 33, 70, 0);
+        white-space: nowrap;
+    }
+    50% {
+        transform: rotateY(90deg);
+        color: rgba(8, 33, 70, 0.2);
+    }
+    75% {
+        transform: rotateY(45deg);
+        color: rgba(8, 33, 70, 0.5);
+    }
+    100% {
+        transform: rotateY(0deg);
+        color: #082146;
+    }
+}
+
+@keyframes hide-card {
+    0% {
+        transform: rotateY(180deg);
+        background-color: #fff;
+    }
+    50% {
+        transform: rotateY(90deg);
+        background-color: #fff;
+    }
+    75% {
+        transform: rotateY(45deg);
+        background-color: rgba(8, 33, 70, 0.5);
+    }
+    100% {
+        transform: rotateY(0deg);
+        background-color: #082146;
+        background-image: url("/img/bbva-api-market.svg");
+        background-size: 45px;
+        background-repeat: no-repeat;
+        background-position: center;
+        color: rgba(8, 33, 70, 0);
+        white-space: nowrap;
+    }
+}
+
+.user-name {
+    font-size: 16px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.user-vote-hidden {
+    background-color: #082146;
+    background-image: url("/img/bbva-api-market.svg");
+    background-size: 45px;
+    background-repeat: no-repeat;
+    background-position: center;
+    text-indent: -9999px;
+    white-space: nowrap;
+}
+
+.user-vote-hide {
+    background-color: #082146;
+    background-image: url("/img/bbva-api-market.svg");
+    background-size: 45px;
+    background-repeat: no-repeat;
+    background-position: center;
+    text-indent: -9999px;
+    white-space: nowrap;
+    animation: hide-card 1s;
+}
+
+.user-vote-reveal {
+    background-color: #fff;
+    animation: reveal-card 1s;
+}
+
+.vote-check {
+    color: green;
+}
+
+/* grid table */
+.grid-table {
+    display: inline-grid;
+    grid-template-rows: auto 1fr 12rem;
+    grid-gap: 0.4rem;
+    grid-template-areas:
+        "left top right"
+        "left center right"
+        "left bottom right";
+    grid-template-columns: 10.4rem 1fr 10.4rem;
+    margin: 2rem auto auto;
+    min-height: 200px;
+    width: auto;
+}
+
+.grid-area {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    min-height: 100px;
+    min-width: 100px;
+}
+
+.grid-table-top {
+    grid-area: top;
+}
+
+.grid-table-top ul {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    padding: 0;
+}
+
+.grid-table-center {
+    grid-area: center;
+}
+
+.grid-table-center-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    min-height: 200px;
+    min-width: 300px;
+    border: 1px solid #082146;
+    border-radius: 5px;
+    padding: 1rem;
+    background-color: #004481;
+    color: #fff;
+}
+
+.grid-table-bottom {
+    grid-area: bottom;
+}
+
+.grid-table-bottom ul {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    padding: 0;
+}
+
+.grid-table-left {
+    grid-area: left;
+}
+
+.grid-table-left ul {
+    padding: 0;
+}
+
+.grid-table-right {
+    grid-area: right;
+}
+
+.grid-table-right ul {
+    padding: 0;
+}
+
+
+.votes-container {
+    background-color: #E9E9E9;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    min-height: 100px;
+    width: 100%;
+    position: fixed;
+    bottom: 25px;
+}
+
+.poker-title {
+    color: #E9E9E9;
+    font-size: 5em;
+    margin: -20px;
 }
