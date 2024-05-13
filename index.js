@@ -102,21 +102,50 @@ const assignSeat = (room) => {
   }
 };
 
+const firstUserAdmin = (room) => {
+  const roomIndex = rooms.findIndex(r => r.room === room);
+  return rooms[roomIndex].users.length === 0;
+};
+
+const sendAdminToFirstUser = (room) => {
+  const roomIndex = rooms.findIndex(r => r.room === room);
+  rooms[roomIndex].users[0].admin = true;
+};
+
+const maxUsersInRoom = (room) => {
+  const roomIndex = rooms.findIndex(r => r.room === room);
+  const users = rooms[roomIndex].users;
+  const maxUsers = maxUsersTop + maxUsersLeft + maxUsersRight + maxUsersBottom;
+  return users.length >= maxUsers;
+};
+
 io.on('connection', (socket) => {
   socket.on('disconnect', () => {
-    console.log('user disconnected');
     const roomIndex = rooms.findIndex(
         r => r.users.find(u => u.id === socket.id));
     if (roomIndex !== -1) {
       const userIndex = rooms[roomIndex].users.findIndex(
           u => u.id === socket.id);
+      const user = rooms[roomIndex].users[userIndex];
       rooms[roomIndex].users.splice(userIndex, 1);
+      if (user.admin && rooms[roomIndex].users.length > 0) {
+        sendAdminToFirstUser(user.room);
+      }
       if (rooms[roomIndex].users.length === 0) {
         rooms.splice(roomIndex, 1);
       }
-      io.to(rooms[roomIndex].room).
-          emit('users',
-              {users: rooms[roomIndex].users, reveal: rooms[roomIndex].reveal});
+      try {
+        if (rooms[roomIndex]) {
+          io.to(rooms[roomIndex].room).
+              emit('users',
+                  {
+                    users: rooms[roomIndex].users,
+                    reveal: rooms[roomIndex].reveal,
+                  });
+        }
+      } catch (e) {
+        console.log(e);
+      }
     }
   });
 
@@ -131,8 +160,18 @@ io.on('connection', (socket) => {
 
   socket.on('newUser', ({room, user}) => {
     const roomIndex = rooms.findIndex(r => r.room === room);
+    if (maxUsersInRoom(room)) {
+      return;
+    }
     const seat = assignSeat(room);
-    rooms[roomIndex].users.push({id: socket.id, room, user, vote: '', seat});
+    rooms[roomIndex].users.push({
+      id: socket.id,
+      room,
+      user,
+      vote: '',
+      seat,
+      admin: firstUserAdmin(room),
+    });
     io.to(room).
         emit('users',
             {users: rooms[roomIndex].users, reveal: rooms[roomIndex].reveal});
@@ -169,9 +208,8 @@ io.on('connection', (socket) => {
         emit('sitted',
             {users: rooms[roomIndex].users, reveal: rooms[roomIndex].reveal});
   });
-
 });
 
 server.listen(3000, () => {
-  console.log(`Server is running. http://localhost:${3000}`);
+  console.log(`Server is running.`);
 });

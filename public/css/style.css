@@ -16,6 +16,33 @@
     width: 100%;
 }
 
+.poker-button {
+    background-color: #082146;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+}
+
+.poker-button:hover {
+    background-color: #365C78;
+}
+
+.poker-button:active {
+    background-color: #365C78;
+}
+
+.poker-button:disabled {
+    background-color: #365C78;
+    cursor: not-allowed;
+}
+
 .text-footer {
     color: #fff;
     font-size: 0.8em;
@@ -268,20 +295,26 @@
 
 .grid-table-center {
     grid-area: center;
+    background-image: url("/img/fibonacci_spiral.svg");
+    background-size: 100%;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 .grid-table-center-content {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     gap: 1rem;
     min-height: 200px;
     min-width: 300px;
+
     border: 1px solid #082146;
     border-radius: 5px;
     padding: 1rem;
-    background-color: #004481;
+    background: rgb(8, 33, 70);
+    background: linear-gradient(90deg, rgba(8, 33, 70, 1) 0%, rgba(8, 33, 70, 0.5382528011204482) 100%);
     color: #fff;
 }
 
@@ -331,5 +364,63 @@
 .poker-title {
     color: #E9E9E9;
     font-size: 5em;
-    margin: -20px;
+}
+
+.copyUrl {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+
+.copyUrl input {
+    height: 30px;
+    max-width: 170px;
+    border: 1px solid #082146;
+    border-radius: 5px;
+    font-size: 13px;
+    padding: 5px;
+}
+
+.copyUrl button {
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+}
+
+#copyUrlDiv {
+    text-align: center;
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .grid-table {
+        grid-template-rows: auto 1fr auto;
+        grid-gap: 0.2rem;
+        grid-template-columns: 8rem 1fr 8rem;
+        min-height: 160px;
+    }
+
+    .grid-area {
+        min-height: 80px;
+        min-width: 80px;
+    }
+
+    .grid-table-center-content {
+        min-height: 160px;
+        min-width: 240px;
+    }
+
+    .votes-container {
+        min-height: 80px;
+
+        padding: 1rem;
+    }
+
+    .fibonacci-list {
+        gap: 0.5rem;
+    }
 }
