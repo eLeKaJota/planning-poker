@@ -296,7 +296,7 @@
 .grid-table-center {
     grid-area: center;
     background-image: url("/img/fibonacci_spiral.svg");
-    background-size: 100%;
+    background-size: 300px;
     background-repeat: no-repeat;
     background-position: center;
 }
@@ -409,6 +409,11 @@
         min-width: 80px;
     }
 
+    .grid-table-center {
+        background-image: url("/img/fibonacci_spiral.svg");
+        background-size: 240px;
+    }
+
     .grid-table-center-content {
         min-height: 160px;
         min-width: 240px;
@@ -421,6 +426,83 @@
     }
 
     .fibonacci-list {
+        gap: 0.5rem;
+    }
+
+    .user-vote {
+        width: 40px;
+        height: 60px;
+    }
+
+    .fibonacci-button {
+        width: 40px;
+        height: 60px;
+    }
+
+    .user-table {
+        /* remove width */
+        width: auto;
+        min-height: auto;
+    }
+
+}
+
+@media (max-width: 480px) {
+    .grid-table {
+        grid-template-rows: auto 1fr auto;
+        grid-gap: 0.2rem;
+        grid-template-columns: 6rem 1fr 6rem;
+        min-height: 120px;
+    }
+
+    .grid-area {
+        min-height: 60px;
+        min-width: 60px;
+    }
+
+    .grid-table-center {
+        background-image: url("/img/fibonacci_spiral.svg");
+        background-size: 180px;
+    }
+
+    .grid-table-center-content {
+        min-height: 120px;
+        min-width: 180px;
+    }
+
+    .votes-container {
+        min-height: 60px;
+
+        padding: 1rem;
+    }
+
+    .fibonacci-list {
+        gap: 0.5rem;
+    }
+
+    .user-vote {
+        width: 30px;
+        height: 45px;
+    }
+
+    .fibonacci-button {
+        width: 30px;
+        height: 45px;
+    }
+
+    .poker-title {
+        font-size: 3em;
+    }
+
+    .copyUrl input {
+        max-width: 120px;
+    }
+
+    .copyUrl button {
+        font-size: 10px;
+    }
+
+    .copyUrl {
         gap: 0.5rem;
     }
 }
