@@ -25,6 +25,14 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '/view/create-room.html'));
 });
 
+app.get('/admin--stats-5454', (req, res) => {
+  res.sendFile(path.join(__dirname, '/view/stats.html'));
+});
+
+app.get('/rooms', (req, res) => {
+  res.status(200).json(rooms);
+});
+
 app.get('/:name', (req, res) => {
   return res.sendFile(path.join(__dirname, '/view/room.html'));
 });
