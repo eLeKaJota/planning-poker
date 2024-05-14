@@ -44,7 +44,8 @@
 
   submitName.addEventListener('click', () => {
     const removeCharacters = name.value.replace(/[^a-zA-Z0-9-_]/g, '-');
-    const formattedName = removeCharacters.replace(/-+/g, '-');
+    let formattedName = removeCharacters.replace(/-+/g, '-');
+    formattedName = formattedName.toLowerCase();
     axios.get('/' + formattedName).then((response) => {
       if (response.data) {
         window.location.href = '/' + formattedName;
@@ -54,6 +55,12 @@
     }).catch((error) => {
       console.error(error);
     });
+  });
+
+  name.addEventListener('keyup', (event) => {
+    if (event.key === 'Enter') {
+      submitName.click();
+    }
   });
 
 </script>

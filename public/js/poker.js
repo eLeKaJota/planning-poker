@@ -135,7 +135,7 @@ function updateUserList() {
   usersRightList.innerHTML = '';
   usersBottomList.innerHTML = '';
   usersTop.forEach(user => {
-    const li = document.createElement('li');
+    const div = document.createElement('div');
     const userContent = `<div class="user-table">
             <div id="userVoteCardTop" class="user-vote">${user.vote}</div>
             <div class="user-name" title="${user.user}">${truncate(user.user,
@@ -143,17 +143,17 @@ function updateUserList() {
         ? '<span class="vote-check">✓</span>'
         : ''}</div>
         </div>`;
-    li.classList.add('list-group-item');
-    li.innerHTML = userContent;
+    div.classList.add('list-group-item');
+    div.innerHTML = userContent;
 
-    const userVoteCard = li.querySelector('#userVoteCardTop');
+    const userVoteCard = div.querySelector('#userVoteCardTop');
     if (user.vote !== '' && !cardReveal) {
       userVoteCard.classList.add('user-vote-hidden');
     }
-    usersTopList.appendChild(li);
+    usersTopList.appendChild(div);
   });
   usersLeft.forEach(user => {
-    const li = document.createElement('li');
+    const div = document.createElement('div');
     const userContent = `<div class="user-table">
             <div id="userVoteCardLeft" class="user-vote">${user.vote}</div>
             <div class="user-name" title="${user.user}">${truncate(user.user,
@@ -161,17 +161,17 @@ function updateUserList() {
         ? '<span class="vote-check">✓</span>'
         : ''}</div>
         </div>`;
-    li.classList.add('list-group-item');
-    li.innerHTML = userContent;
+    div.classList.add('list-group-item');
+    div.innerHTML = userContent;
 
-    const userVoteCard = li.querySelector('#userVoteCardLeft');
+    const userVoteCard = div.querySelector('#userVoteCardLeft');
     if (user.vote !== '' && !cardReveal) {
       userVoteCard.classList.add('user-vote-hidden');
     }
-    usersLeftList.appendChild(li);
+    usersLeftList.appendChild(div);
   });
   usersRight.forEach(user => {
-    const li = document.createElement('li');
+    const div = document.createElement('div');
     const userContent = `<div class="user-table">
             <div id="userVoteCardRight" class="user-vote">${user.vote}</div>
             <div class="user-name" title="${user.user}">${truncate(user.user,
@@ -179,17 +179,17 @@ function updateUserList() {
         ? '<span class="vote-check">✓</span>'
         : ''}</div>
         </div>`;
-    li.classList.add('list-group-item');
-    li.innerHTML = userContent;
+    div.classList.add('list-group-item');
+    div.innerHTML = userContent;
 
-    const userVoteCard = li.querySelector('#userVoteCardRight');
+    const userVoteCard = div.querySelector('#userVoteCardRight');
     if (user.vote !== '' && !cardReveal) {
       userVoteCard.classList.add('user-vote-hidden');
     }
-    usersRightList.appendChild(li);
+    usersRightList.appendChild(div);
   });
   usersBottom.forEach(user => {
-    const li = document.createElement('li');
+    const div = document.createElement('div');
     const userContent = `<div class="user-table">
             <div id="userVoteCardBottom" class="user-vote">${user.vote}</div>
             <div class="user-name" title="${user.user}">${truncate(user.user,
@@ -197,14 +197,14 @@ function updateUserList() {
         ? '<span class="vote-check">✓</span>'
         : ''}</div>
         </div>`;
-    li.classList.add('list-group-item');
-    li.innerHTML = userContent;
+    div.classList.add('list-group-item');
+    div.innerHTML = userContent;
 
-    const userVoteCard = li.querySelector('#userVoteCardBottom');
+    const userVoteCard = div.querySelector('#userVoteCardBottom');
     if (user.vote !== '' && !cardReveal) {
       userVoteCard.classList.add('user-vote-hidden');
     }
-    usersBottomList.appendChild(li);
+    usersBottomList.appendChild(div);
   });
 };
 
@@ -294,6 +294,13 @@ submitName.addEventListener('click', () => {
   socket.emit('newUser',
       {room: roomName[roomName.length - 1], user: name.value});
   modal.hide();
+});
+
+name.addEventListener('keyup', (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    submitName.click();
+  }
 });
 
 for (let i = 0; i < buttons.length; i++) {
