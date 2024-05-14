@@ -450,6 +450,10 @@
         min-height: auto;
     }
 
+    .user-vote-hidden {
+        background-size: 35px;
+    }
+
 }
 
 @media (max-width: 480px) {
@@ -509,5 +513,9 @@
 
     .copyUrl {
         gap: 0.5rem;
+    }
+
+    .user-vote-hidden {
+        background-size: 30px;
     }
 }
