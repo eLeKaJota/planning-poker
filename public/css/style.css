@@ -458,6 +458,32 @@ ul {
     color: #082146;
 }
 
+.last-rooms-link {
+    color: #082146;
+    text-decoration: none;
+    font-size: 14px;
+    cursor: pointer;
+    width: fit-content;
+}
+
+.last-rooms-link:hover {
+    text-decoration: underline;
+}
+
+.last-rooms-link:active {
+    text-decoration: underline;
+}
+
+.last-rooms-title {
+    margin-top: 1rem;
+    font-size: 14px;
+}
+
+.last-rooms {
+    display: flex;
+    flex-direction: column;
+}
+
 @media (max-width: 768px) {
     .grid-table {
         grid-template-rows: auto 1fr auto;

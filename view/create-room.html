@@ -19,6 +19,8 @@
             </div>
             <div class="modal-body">
                 <input type="text" class="form-control" id="name" placeholder="Nombre">
+                <div class="last-rooms-title">Últimas salas creadas:</div>
+                <div class="last-rooms" id="lastRooms"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" id="submitName" class="btn btn-primary">Entrar</button>
@@ -39,13 +41,11 @@
     backdrop: 'static',
     keyboard: false,
   });
+  const lastRooms = document.getElementById('lastRooms');
 
   modal.show();
 
-  submitName.addEventListener('click', () => {
-    const removeCharacters = name.value.replace(/[^a-zA-Z0-9-_]/g, '-');
-    let formattedName = removeCharacters.replace(/-+/g, '-');
-    formattedName = formattedName.toLowerCase();
+  const createRoom = (formattedName) => {
     axios.get('/checkRooms', {
       params: {
         room: formattedName,
@@ -54,20 +54,61 @@
       if (response.data.exists) {
         alert('No es posible crear una sala con ese nombre, por favor, elige otro nombre.');
       } else {
+        setRooms(formattedName);
         window.location.href = '/' + formattedName;
       }
     }).catch((error) => {
       console.error(error);
     });
-    // axios.get('/' + formattedName).then((response) => {
-    //   if (response.data) {
-    //     window.location.href = '/' + formattedName;
-    //   } else {
-    //     alert('La sala no existe');
-    //   }
-    // }).catch((error) => {
-    //   console.error(error);
-    // });
+  };
+
+  function formatLocationPath(string) {
+    const replace = string.replace(/-/g, ' ');
+    return replace.charAt(0).toUpperCase() + replace.slice(1);
+  }
+
+  const getRooms = () => {
+    if (localStorage.getItem('lastRooms')) {
+      const rooms = JSON.parse(localStorage.getItem('lastRooms'));
+      rooms.reverse();
+      rooms.forEach((room) => {
+        const link = document.createElement('a');
+        link.classList.add('last-rooms-link');
+        link.textContent = `${formatLocationPath(room)}`;
+        link.addEventListener('click', () => {
+          createRoom(room);
+        });
+        lastRooms.appendChild(link);
+      });
+    }
+  };
+
+  getRooms();
+
+  const setRooms = (room) => {
+    if (localStorage.getItem('lastRooms')) {
+      const rooms = JSON.parse(localStorage.getItem('lastRooms'));
+      if (!rooms.includes(room)) {
+        if (rooms.length >= 5) {
+          rooms.shift();
+        }
+        rooms.push(room);
+        localStorage.setItem('lastRooms', JSON.stringify(rooms));
+      } else {
+        rooms.splice(rooms.indexOf(room), 1);
+        rooms.push(room);
+        localStorage.setItem('lastRooms', JSON.stringify(rooms));
+      }
+    } else {
+      localStorage.setItem('lastRooms', JSON.stringify([room]));
+    }
+  };
+
+  submitName.addEventListener('click', () => {
+    const removeCharacters = name.value.replace(/[^a-zA-Z0-9-_]/g, '-');
+    let formattedName = removeCharacters.replace(/-+/g, '-');
+    formattedName = formattedName.toLowerCase();
+    createRoom(formattedName);
   });
 
   name.addEventListener('keyup', (event) => {
