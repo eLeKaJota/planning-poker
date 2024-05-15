@@ -46,15 +46,28 @@
     const removeCharacters = name.value.replace(/[^a-zA-Z0-9-_]/g, '-');
     let formattedName = removeCharacters.replace(/-+/g, '-');
     formattedName = formattedName.toLowerCase();
-    axios.get('/' + formattedName).then((response) => {
-      if (response.data) {
-        window.location.href = '/' + formattedName;
+    axios.get('/checkRooms', {
+      params: {
+        room: formattedName,
+      },
+    }).then((response) => {
+      if (response.data.exists) {
+        alert('No es posible crear una sala con ese nombre, por favor, elige otro nombre.');
       } else {
-        alert('La sala no existe');
+        window.location.href = '/' + formattedName;
       }
     }).catch((error) => {
       console.error(error);
     });
+    // axios.get('/' + formattedName).then((response) => {
+    //   if (response.data) {
+    //     window.location.href = '/' + formattedName;
+    //   } else {
+    //     alert('La sala no existe');
+    //   }
+    // }).catch((error) => {
+    //   console.error(error);
+    // });
   });
 
   name.addEventListener('keyup', (event) => {

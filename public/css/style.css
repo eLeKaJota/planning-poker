@@ -1,9 +1,33 @@
+ul {
+    list-style-type: none;
+
+}
+
 .header {
     background-color: #082146;
     color: #fff;
     padding: 10px;
     text-align: center;
+}
 
+.admin-options-check {
+    font-size: 12px;
+}
+
+.header-name {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.admin-subheader {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    padding-top: 1rem;
 }
 
 .content {
@@ -399,6 +423,39 @@
 #copyUrlDiv {
     text-align: center;
     font-size: 12px;
+}
+
+#name {
+    margin-bottom: 0.4rem;
+}
+
+.room-users-list {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.room-users-list-action-button {
+    color: #082146;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+
+}
+
+.user-actions {
+    cursor: pointer;
+}
+
+.room-accordion-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    color: #082146;
 }
 
 @media (max-width: 768px) {

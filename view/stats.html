@@ -6,41 +6,185 @@
     <title>Pivot Poker</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
-<div>
-    <h1 class="text-center">Pivot Poker</h1>
-    <div id="stats" class="container"></div>
-
+<div class="header">
+    <h3 class="text-center">Pivot Poker Admin</h3>
 </div>
+<div id="stats" class="container">
+    <div class="admin-subheader">
+        <h4 class="text-center">Salas activas</h4>
+        <button class="btn btn-primary" id="refresh">Actualizar</button>
+    </div>
+    <div class="accordion" id="roomsAccordion">
+
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <script>
+  const roomsAccordion = document.getElementById('roomsAccordion');
+  const refresh = document.getElementById('refresh');
   let rooms = [];
 
+  const renderRoomInfo = (room) => {
+    const roomElement = document.createElement('div');
+    roomElement.classList.add('accordion-item');
+
+    const copyUrl = document.createElement('span');
+    copyUrl.classList.add('dropdown-item');
+    copyUrl.classList.add('user-actions');
+    copyUrl.id = 'copyUrl';
+    copyUrl.innerText = 'Copiar URL';
+
+    const removeRoom = document.createElement('span');
+    removeRoom.classList.add('dropdown-item');
+    removeRoom.classList.add('user-actions');
+    removeRoom.id = 'removeRoom';
+    removeRoom.innerText = 'Eliminar sala';
+
+    roomElement.innerHTML = `
+      <div class="accordion-header room-accordion-header" id="heading${room.room}">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${room.room}" aria-expanded="false" aria-controls="collapse${room.room}">
+            <b>${room.room}</b> - ${room.users.length} usuarios
+            <button class="btn btn-link btn-sm room-users-list-action-button" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
+                  <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+                </svg>
+            </button>
+            <ul class="dropdown-menu">
+              <li id="copyUrl"></li>
+              <li id="removeRoom"></li>
+            </ul>
+        </button>
+      </div>
+      <div id="collapse${room.room}" class="accordion-collapse collapse" aria-labelledby="heading${room.room}" data-bs-parent="#roomsAccordion">
+        <div class="accordion-body">
+          <ul id="userList">
+          </ul>
+        </div>
+      </div>
+    `;
+    roomElement.querySelector('#copyUrl').appendChild(copyUrl);
+    roomElement.querySelector('#removeRoom').appendChild(removeRoom);
+    roomsAccordion.appendChild(roomElement);
+    copyUrl.addEventListener('click', () => {
+      const url = `${window.location.origin}/${room.room}`;
+      navigator.clipboard.writeText(url).then(() => {
+      }).catch((error) => {
+        console.error(error);
+      });
+    });
+    removeRoom.addEventListener('click', () => {
+      axios.post('/removeRoom', {
+        room: room.room,
+      }).then(() => {
+        getRooms();
+      }).catch((error) => {
+        console.error(error);
+      });
+    });
+
+    const userList = roomElement.querySelector('#userList');
+    room.users.forEach(user => {
+      const toggleAdmin = document.createElement('span');
+      toggleAdmin.classList.add('dropdown-item');
+      toggleAdmin.classList.add('user-actions');
+      toggleAdmin.id = 'toggleUserAdmin';
+      toggleAdmin.innerText = user.admin ? 'Retirar Admin.' : 'Dar Admin.';
+
+      const removeUser = document.createElement('span');
+      removeUser.classList.add('dropdown-item');
+      removeUser.classList.add('user-actions');
+      removeUser.id = 'removeUser';
+      removeUser.innerText = 'Expulsar';
+
+      const userElement = document.createElement('li');
+      userElement.id = user.id;
+      userElement.innerHTML = `
+            <div class="room-users-list">
+              <span>${user.user} ${user.admin ? '(Admin)' : ''}</span>
+              <div class="dropdown">
+                <button class="btn btn-link btn-sm room-users-list-action-button" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
+                    <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+                  </svg>
+                </button>
+                <ul class="dropdown-menu">
+                  <li id="toggleAdminLi"></li>
+                  <li id="removeUserLi"></li>
+                </ul>
+              </div>
+            </div>`;
+      userElement.querySelector('#toggleAdminLi').appendChild(toggleAdmin);
+      userElement.querySelector('#removeUserLi').appendChild(removeUser);
+      userList.appendChild(userElement);
+      toggleAdmin.addEventListener('click', () => {
+        axios.post('/toggleAdmin', {
+          room: room.room,
+          userId: user.id,
+        }).then(() => {
+          getRooms();
+        }).catch((error) => {
+          console.error(error);
+        });
+      });
+      removeUser.addEventListener('click', () => {
+        axios.post('/removeUser', {
+          room: room.room,
+          userId: user.id,
+        }).then(() => {
+          getRooms();
+        }).catch((error) => {
+          console.error(error);
+        });
+      });
+    });
+  };
+
+  const saveAccordionStates = () => {
+    const accordionStates = [];
+    roomsAccordion.querySelectorAll('.accordion-collapse').forEach((item) => {
+      accordionStates.push(item.classList.contains('show'));
+    });
+    localStorage.setItem('accordionStates', JSON.stringify(accordionStates));
+  };
+
+  const restoreAccordionStates = () => {
+    const accordionStates = JSON.parse(localStorage.getItem('accordionStates'));
+    if (accordionStates) {
+      roomsAccordion.querySelectorAll('.accordion-collapse').forEach((item, index) => {
+        if (accordionStates[index]) {
+          item.classList.add('show');
+        }
+      });
+    }
+  };
+
   const getRooms = () => {
+    saveAccordionStates();
     axios.get('/rooms').then((response) => {
       rooms = response.data;
-      const stats = document.getElementById('stats');
-      stats.innerHTML = '';
+      roomsAccordion.innerHTML = '';
       rooms.forEach((room) => {
-        const roomElement = document.createElement('div');
-        roomElement.innerHTML = `<b><span>${room.room}</span></b> - ${room.users.length} usuarios`;
-        stats.appendChild(roomElement);
+        renderRoomInfo(room);
       });
+      restoreAccordionStates();
     }).catch((error) => {
       console.error(error);
     });
   };
+  getRooms();
 
-  setInterval(() => {
+  refresh.addEventListener('click', () => {
     getRooms();
-  }, 3000);
-
+  });
 </script>
 </body>
 </html>

@@ -1,8 +1,10 @@
 //------------------------------- INIT
 const socket = io();
 const name = document.getElementById('name');
+const rememberName = document.getElementById('rememberName');
 const submitName = document.getElementById('submitName');
 const room = document.getElementById('room');
+const userName = document.getElementById('userName');
 const usersTopList = document.getElementById('usersTop');
 const usersLeftList = document.getElementById('usersLeft');
 const usersRightList = document.getElementById('usersRight');
@@ -13,6 +15,8 @@ const revealVotes = document.getElementById('revealVotes');
 const resetVotes = document.getElementById('resetVotes');
 const votesContainer = document.getElementById('votesContainer');
 const divStats = document.getElementById('stats');
+const adminOptionsDiv = document.getElementById('adminOptionsDiv');
+const adminOptionsCheckbox = document.getElementById('adminOptionsCheckbox');
 const copyUrlDiv = document.getElementById('copyUrlDiv');
 const copyUrlInput = document.getElementById('copyUrlInput');
 const copyUrlButton = document.getElementById('copyUrlButton');
@@ -27,14 +31,18 @@ let locationPath = window.location.pathname.split('/');
 const roomName = window.location.pathname.split('/');
 let usersArray = [];
 let mySocketId = '';
+let myName = '';
 let cardReveal = false;
 let winner = true;
 let highest = 0;
 let admin = false;
+let adminOptions = false;
 
 joinRoom();
+getNameFromLocalStorage();
 modal.show();
 divStats.style.display = 'none';
+adminOptionsDiv.style.display = 'none';
 votesContainer.style.display = 'flex';
 room.textContent = formatLocationPath(locationPath[locationPath.length - 1]);
 
@@ -63,12 +71,31 @@ function truncate(str, n) {
     let subString = str.substr(0, n - 1); // the original check
     return subString.substr(0, subString.lastIndexOf(' ')) + '...';
   }
-};
+}
 
 function formatLocationPath(string) {
   const replace = string.replace(/-/g, ' ');
   return replace.charAt(0).toUpperCase() + replace.slice(1);
-};
+}
+
+function getNameFromLocalStorage() {
+  const recoveredName = localStorage.getItem('name');
+  if (recoveredName) {
+    rememberName.checked = true;
+    name.value = recoveredName;
+  }
+  return '';
+}
+
+function setNameToLocalStorage(name) {
+  if (rememberName.checked) {
+    localStorage.setItem('name', name);
+  } else {
+    if (localStorage.getItem('name')) {
+      localStorage.removeItem('name');
+    }
+  }
+}
 
 //------------------------------- FUNCTIONS
 function revealUserVotes() {
@@ -80,7 +107,7 @@ function revealUserVotes() {
   }
 
   renderVotesStats();
-};
+}
 
 function getStats() {
   const votesRaw = {};
@@ -106,11 +133,24 @@ function getStats() {
   averageVotes = votesTotal / votesCountNumber;
   averageVotes = getNearestFibonacci(averageVotes);
   return {averageVotes, votes};
-};
+}
 
 function adminCheck() {
-  const adminUser = usersArray.find(user => user.admin === true);
-  admin = adminUser?.id === mySocketId;
+  const adminUsers = usersArray.filter(user => user.admin === true);
+  admin = adminUsers.some(user => user.id === mySocketId);
+  if (admin) {
+    adminOptionsDiv.style.display = 'block';
+    adminOptionsCheckbox.addEventListener('click', () => {
+      toggleAdminOptions();
+    });
+  } else {
+    adminOptionsDiv.style.display = 'none';
+  }
+}
+
+function toggleAdminOptions() {
+  adminOptions = !!adminOptionsCheckbox.checked;
+  updateUserList();
 }
 
 copyUrlButton.addEventListener('click', () => {
@@ -134,14 +174,45 @@ function updateUserList() {
   usersLeftList.innerHTML = '';
   usersRightList.innerHTML = '';
   usersBottomList.innerHTML = '';
+
   usersTop.forEach(user => {
     const div = document.createElement('div');
-    const userContent = `<div class="user-table">
+
+    const toggleAdmin = document.createElement('span');
+    toggleAdmin.classList.add('dropdown-item');
+    toggleAdmin.classList.add('user-actions');
+    toggleAdmin.id = 'toggleUserAdmin';
+    toggleAdmin.innerText = user.admin ? 'Retirar Admin.' : 'Dar Admin.';
+
+    const removeUser = document.createElement('span');
+    removeUser.classList.add('dropdown-item');
+    removeUser.classList.add('user-actions');
+    removeUser.id = 'removeUser';
+    removeUser.innerText = 'Expulsar';
+
+    const userContent = `<div id="${user.id}" class="user-table">
             <div id="userVoteCardTop" class="user-vote">${user.vote}</div>
             <div class="user-name" title="${user.user}">${truncate(user.user,
         20)} ${user.vote !== ''
         ? '<span class="vote-check">✓</span>'
         : ''}</div>
+            ${adminOptions && admin && user.id !== mySocketId ? `
+            <div class="dropdown">
+              <button class="btn btn-link btn-sm room-users-list-action-button"
+                      type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                     fill="currentColor" class="bi bi-three-dots-vertical"
+                     viewBox="0 0 16 16">
+                  <path
+                      d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+                </svg>
+              </button>
+              <ul class="dropdown-menu">
+                <li id="toggleAdminLi"></li>
+                <li id="removeUserLi"></li>
+              </ul>
+            </div>
+            ` : ''}
         </div>`;
     div.classList.add('list-group-item');
     div.innerHTML = userContent;
@@ -150,16 +221,60 @@ function updateUserList() {
     if (user.vote !== '' && !cardReveal) {
       userVoteCard.classList.add('user-vote-hidden');
     }
+    if (adminOptions && admin && user.id !== mySocketId) {
+      div.querySelector('#toggleAdminLi').appendChild(toggleAdmin);
+      div.querySelector('#removeUserLi').appendChild(removeUser);
+    }
     usersTopList.appendChild(div);
+    if (adminOptions && admin && user.id !== mySocketId) {
+      toggleAdmin.addEventListener('click', () => {
+        axios.post('/toggleAdmin',
+            {room: roomName[roomName.length - 1], userId: user.id});
+      });
+      removeUser.addEventListener('click', () => {
+        axios.post('/removeUser',
+            {room: roomName[roomName.length - 1], userId: user.id});
+      });
+    }
   });
+
   usersLeft.forEach(user => {
     const div = document.createElement('div');
-    const userContent = `<div class="user-table">
+
+    const toggleAdmin = document.createElement('span');
+    toggleAdmin.classList.add('dropdown-item');
+    toggleAdmin.classList.add('user-actions');
+    toggleAdmin.id = 'toggleUserAdmin';
+    toggleAdmin.innerText = user.admin ? 'Retirar Admin.' : 'Dar Admin.';
+
+    const removeUser = document.createElement('span');
+    removeUser.classList.add('dropdown-item');
+    removeUser.classList.add('user-actions');
+    removeUser.id = 'removeUser';
+    removeUser.innerText = 'Expulsar';
+
+    const userContent = `<div id="${user.id}" class="user-table">
             <div id="userVoteCardLeft" class="user-vote">${user.vote}</div>
             <div class="user-name" title="${user.user}">${truncate(user.user,
         20)} ${user.vote !== ''
         ? '<span class="vote-check">✓</span>'
         : ''}</div>
+            ${adminOptions && admin && user.id !== mySocketId ? `
+            <div class="dropdown">
+              <button class="btn btn-link btn-sm room-users-list-action-button"
+                      type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                     fill="currentColor" class="bi bi-three-dots-vertical"
+                     viewBox="0 0 16 16">
+                  <path
+                      d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+                </svg>
+              </button>
+              <ul class="dropdown-menu">
+                <li id="toggleAdminLi"></li>
+                <li id="removeUserLi"></li>
+              </ul>
+            </div>` : ''}
         </div>`;
     div.classList.add('list-group-item');
     div.innerHTML = userContent;
@@ -168,16 +283,59 @@ function updateUserList() {
     if (user.vote !== '' && !cardReveal) {
       userVoteCard.classList.add('user-vote-hidden');
     }
+    if (adminOptions && admin && user.id !== mySocketId) {
+      div.querySelector('#toggleAdminLi').appendChild(toggleAdmin);
+      div.querySelector('#removeUserLi').appendChild(removeUser);
+    }
     usersLeftList.appendChild(div);
+    if (adminOptions && admin && user.id !== mySocketId) {
+      toggleAdmin.addEventListener('click', () => {
+        axios.post('/toggleAdmin',
+            {room: roomName[roomName.length - 1], userId: user.id});
+      });
+      removeUser.addEventListener('click', () => {
+        axios.post('/removeUser',
+            {room: roomName[roomName.length - 1], userId: user.id});
+      });
+    }
   });
   usersRight.forEach(user => {
     const div = document.createElement('div');
-    const userContent = `<div class="user-table">
+
+    const toggleAdmin = document.createElement('span');
+    toggleAdmin.classList.add('dropdown-item');
+    toggleAdmin.classList.add('user-actions');
+    toggleAdmin.id = 'toggleUserAdmin';
+    toggleAdmin.innerText = user.admin ? 'Retirar Admin.' : 'Dar Admin.';
+
+    const removeUser = document.createElement('span');
+    removeUser.classList.add('dropdown-item');
+    removeUser.classList.add('user-actions');
+    removeUser.id = 'removeUser';
+    removeUser.innerText = 'Expulsar';
+
+    const userContent = `<div id="${user.id}" class="user-table">
             <div id="userVoteCardRight" class="user-vote">${user.vote}</div>
             <div class="user-name" title="${user.user}">${truncate(user.user,
         20)} ${user.vote !== ''
         ? '<span class="vote-check">✓</span>'
         : ''}</div>
+            ${adminOptions && admin && user.id !== mySocketId ? `
+            <div class="dropdown">
+              <button class="btn btn-link btn-sm room-users-list-action-button"
+                      type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                     fill="currentColor" class="bi bi-three-dots-vertical"
+                     viewBox="0 0 16 16">
+                  <path
+                      d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+                </svg>
+              </button>
+              <ul class="dropdown-menu">
+                <li id="toggleAdminLi"></li>
+                <li id="removeUserLi"></li>
+              </ul>
+            </div>` : ''}
         </div>`;
     div.classList.add('list-group-item');
     div.innerHTML = userContent;
@@ -186,16 +344,59 @@ function updateUserList() {
     if (user.vote !== '' && !cardReveal) {
       userVoteCard.classList.add('user-vote-hidden');
     }
+    if (adminOptions && admin && user.id !== mySocketId) {
+      div.querySelector('#toggleAdminLi').appendChild(toggleAdmin);
+      div.querySelector('#removeUserLi').appendChild(removeUser);
+    }
     usersRightList.appendChild(div);
+    if (adminOptions && admin && user.id !== mySocketId) {
+      toggleAdmin.addEventListener('click', () => {
+        axios.post('/toggleAdmin',
+            {room: roomName[roomName.length - 1], userId: user.id});
+      });
+      removeUser.addEventListener('click', () => {
+        axios.post('/removeUser',
+            {room: roomName[roomName.length - 1], userId: user.id});
+      });
+    }
   });
   usersBottom.forEach(user => {
     const div = document.createElement('div');
-    const userContent = `<div class="user-table">
+
+    const toggleAdmin = document.createElement('span');
+    toggleAdmin.classList.add('dropdown-item');
+    toggleAdmin.classList.add('user-actions');
+    toggleAdmin.id = 'toggleUserAdmin';
+    toggleAdmin.innerText = user.admin ? 'Retirar Admin.' : 'Dar Admin.';
+
+    const removeUser = document.createElement('span');
+    removeUser.classList.add('dropdown-item');
+    removeUser.classList.add('user-actions');
+    removeUser.id = 'removeUser';
+    removeUser.innerText = 'Expulsar';
+
+    const userContent = `<div id="${user.id}" class="user-table">
             <div id="userVoteCardBottom" class="user-vote">${user.vote}</div>
             <div class="user-name" title="${user.user}">${truncate(user.user,
         20)} ${user.vote !== ''
         ? '<span class="vote-check">✓</span>'
         : ''}</div>
+            ${adminOptions && admin && user.id !== mySocketId ? `
+            <div class="dropdown">
+              <button class="btn btn-link btn-sm room-users-list-action-button"
+                      type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                     fill="currentColor" class="bi bi-three-dots-vertical"
+                     viewBox="0 0 16 16">
+                  <path
+                      d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+                </svg>
+              </button>
+              <ul class="dropdown-menu">
+                <li id="toggleAdminLi"></li>
+                <li id="removeUserLi"></li>
+              </ul>
+            </div>` : ''}
         </div>`;
     div.classList.add('list-group-item');
     div.innerHTML = userContent;
@@ -204,9 +405,23 @@ function updateUserList() {
     if (user.vote !== '' && !cardReveal) {
       userVoteCard.classList.add('user-vote-hidden');
     }
+    if (adminOptions && admin && user.id !== mySocketId) {
+      div.querySelector('#toggleAdminLi').appendChild(toggleAdmin);
+      div.querySelector('#removeUserLi').appendChild(removeUser);
+    }
     usersBottomList.appendChild(div);
+    if (adminOptions && admin && user.id !== mySocketId) {
+      toggleAdmin.addEventListener('click', () => {
+        axios.post('/toggleAdmin',
+            {room: roomName[roomName.length - 1], userId: user.id});
+      });
+      removeUser.addEventListener('click', () => {
+        axios.post('/removeUser',
+            {room: roomName[roomName.length - 1], userId: user.id});
+      });
+    }
   });
-};
+}
 
 function renderVoteWithCard(vote, count) {
   const voteCount = document.createElement('div');
@@ -225,7 +440,7 @@ function renderVoteWithCard(vote, count) {
     winner = false;
   }
   votesCount.appendChild(voteCount);
-};
+}
 
 function renderVotesStats() {
   const {averageVotes, votes} = getStats();
@@ -238,7 +453,7 @@ function renderVotesStats() {
         </div>`;
 
   votesAverage.innerHTML = votesAverageContent;
-};
+}
 
 //------------------------------- CHECK DISPLAY
 function checkRevealButton() {
@@ -248,7 +463,7 @@ function checkRevealButton() {
   } else {
     revealVotes.style.display = 'none';
   }
-};
+}
 
 function checkResetButton() {
   if (cardReveal && admin) {
@@ -256,7 +471,7 @@ function checkResetButton() {
   } else {
     resetVotes.style.display = 'none';
   }
-};
+}
 
 function checkDivStats() {
   if (cardReveal) {
@@ -266,7 +481,7 @@ function checkDivStats() {
     divStats.style.display = 'none';
     votesContainer.style.display = 'flex';
   }
-};
+}
 
 function checkUrlCopyDiv() {
   const canReveal = usersArray.every(user => user.vote !== '');
@@ -291,6 +506,9 @@ submitName.addEventListener('click', () => {
   if (!name.value || name.value === '' || name.value === ' ') {
     return;
   }
+  setNameToLocalStorage(name.value);
+  myName = name.value;
+  userName.textContent = myName;
   socket.emit('newUser',
       {room: roomName[roomName.length - 1], user: name.value});
   modal.hide();
@@ -318,7 +536,7 @@ for (let i = 0; i < buttons.length; i++) {
 
 function joinRoom() {
   socket.emit('joinRoom', roomName[roomName.length - 1]);
-};
+}
 
 //------------------------------- SOCKET IN
 socket.on('reset', ({users, reveal}) => {
@@ -366,4 +584,9 @@ socket.on('users', ({users, reveal}) => {
 socket.on('connect', () => {
   console.log('Conectado. Disfruta de la partida.');
   mySocketId = socket.id;
+});
+
+socket.on('disconnected', (message) => {
+  alert(message);
+  location.href = '/';
 });
