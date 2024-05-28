@@ -88,6 +88,11 @@ app.post('/toggleAdmin', (req, res) => {
   const userIndex = rooms[roomIndex].users.findIndex(
       u => u.id === req.body.userId);
   rooms[roomIndex].users[userIndex].admin = !rooms[roomIndex].users[userIndex].admin;
+  if (rooms[roomIndex].users[userIndex].admin) {
+    logger(['User ', req.body.userId, ' has been promoted to admin in room: ', req.body.room], 'yellow');
+  } else {
+    logger(['User ', req.body.userId, ' has been demoted to user in room: ', req.body.room], 'yellow');
+  }
   io.to(req.body.room).
       emit('users',
           {users: rooms[roomIndex].users, reveal: rooms[roomIndex].reveal});
@@ -108,11 +113,13 @@ app.post('/removeUser', (req, res) => {
         emit('users',
             {users: rooms[roomIndex].users, reveal: rooms[roomIndex].reveal});
   }
+  logger(['User ', req.body.userId, ' has been removed from room: ', req.body.room], 'red');
   return res.status(200).json({message: 'Usuario eliminado correctamente.'});
 });
 
 app.post('/removeRoom', (req, res) => {
   const roomIndex = rooms.findIndex(r => r.room === req.body.room);
+  logger(['Room ', req.body.room, ' has been removed'], 'red');
   rooms[roomIndex].users.forEach(u => {
     io.to(u.id).emit('disconnected', 'La sala ha sido eliminada.');
   });
@@ -132,6 +139,14 @@ app.get('/:name', (req, res) => {
 //---------------------------- CRON JOBS ----------------------------
 cron.schedule(CRON.EVERY_15_MINUTES, () => {
   removeEmptyRooms();
+});
+
+cron.schedule(CRON.EVERY_MINUTE, () => {
+  let users = 0;
+  rooms.forEach(r => {
+    users += r.users.length;
+  });
+  logger(['Rooms: ', rooms.length, ' | Users: ', users], 'cyan');
 });
 
 //---------------------------- FUNCTIONS ----------------------------
@@ -284,6 +299,9 @@ const logger = (message, color) => {
       colorSelected = 37;
       break;
   }
+  if (Array.isArray(message)) {
+      message = message.join('');
+  }
   console.log(
       '\x1b[' + colorSelected + 'm%s\x1b[0m',
       new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' - ' +
@@ -293,7 +311,7 @@ const logger = (message, color) => {
 
 //---------------------------- SOCKETS ----------------------------
 io.on('connection', (socket) => {
-  socket.on('disconnect', () => {
+  socket.on('disconnect', (e) => {
     const roomIndex = rooms.findIndex(
         r => r.users.find(u => u.id === socket.id));
     if (roomIndex !== -1) {
@@ -304,9 +322,15 @@ io.on('connection', (socket) => {
       if (user.admin && rooms[roomIndex].users.length > 0) {
         sendAdminToFirstUser(user.room);
       }
+      const room = rooms[roomIndex].room;
+      logger(['User disconnected: ', user.user, ' (', socket.id, ') from room: ', room], 'red');
+      logger(['Reason: ', e], 'red');
       if (rooms[roomIndex].users.length === 0) {
         rooms.splice(roomIndex, 1);
+
       }
+
+    
       try {
         if (rooms[roomIndex]) {
           io.to(rooms[roomIndex].room).
@@ -332,6 +356,7 @@ io.on('connection', (socket) => {
       rooms.push({room, users: [], reveal: false});
       roomIndex = rooms.findIndex(r => r.room === room);
     }
+    logger(['Client connected to room: ', room, ' (', socket.id, ')'], 'green');
     io.to(room).
         emit('users',
             {users: rooms[roomIndex].users, reveal: rooms[roomIndex].reveal});
@@ -355,6 +380,7 @@ io.on('connection', (socket) => {
       seat,
       admin: firstUserAdmin(room),
     });
+    logger(['New user: ', user, ' (', socket.id, ') in room: ', room], 'green');
     io.to(room).
         emit('users',
             {users: rooms[roomIndex].users, reveal: rooms[roomIndex].reveal});
