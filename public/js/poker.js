@@ -21,6 +21,7 @@ const copyUrlDiv = document.getElementById('copyUrlDiv');
 const copyUrlInput = document.getElementById('copyUrlInput');
 const copyUrlButton = document.getElementById('copyUrlButton');
 const copyUrlInfo = document.getElementById('copyUrlInfo');
+const adminForceReveal = document.getElementById('adminForceReveal');
 const modal = new bootstrap.Modal(document.getElementById('nameModal'), {
   backdrop: 'static',
   keyboard: false,
@@ -37,6 +38,7 @@ let winner = true;
 let highest = 0;
 let admin = false;
 let adminOptions = false;
+let forceReveal = false;
 
 joinRoom();
 getNameFromLocalStorage();
@@ -152,6 +154,10 @@ function toggleAdminOptions() {
   adminOptions = !!adminOptionsCheckbox.checked;
   updateUserList();
 }
+
+adminForceReveal.addEventListener('click', () => {
+  socket.emit('reveal', roomName[roomName.length - 1]);
+});
 
 copyUrlButton.addEventListener('click', () => {
   copyUrlInput.select();
@@ -548,6 +554,7 @@ socket.on('reset', ({users, reveal}) => {
     buttons[i].classList.remove('fibonacci-button-selected');
   }
   revealVotes.style.display = 'block';
+  adminForceReveal.style.display = 'inline';
   resetVotes.style.display = 'none';
   divStats.style.display = 'none';
   winner = true;
@@ -564,6 +571,7 @@ socket.on('reveal', (reveal) => {
   if (cardReveal) {
     revealUserVotes();
     revealVotes.style.display = 'none';
+    adminForceReveal.style.display = 'none';
   }
   checkResetButton();
   checkDivStats();

@@ -30,6 +30,16 @@ ul {
     padding-top: 1rem;
 }
 
+.admin-force-reveal {
+    margin-left: 24px;
+    cursor: pointer;
+    color: #fff;
+}
+
+.admin-force-reveal:hover {
+    text-decoration: underline;
+}
+
 .content {
     margin-bottom: 150px;
 }
