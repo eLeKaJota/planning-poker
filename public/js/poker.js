@@ -28,6 +28,9 @@ const modal = new bootstrap.Modal(document.getElementById('nameModal'), {
 });
 const buttons = document.getElementsByClassName('fibonacci-button');
 
+const container = document.querySelector('#fireworks')
+const fireworks = new Fireworks.default(container);
+
 let locationPath = window.location.pathname.split('/');
 const roomName = window.location.pathname.split('/');
 let usersArray = [];
@@ -47,6 +50,34 @@ divStats.style.display = 'none';
 adminOptionsDiv.style.display = 'none';
 votesContainer.style.display = 'flex';
 room.textContent = formatLocationPath(locationPath[locationPath.length - 1]);
+
+//------------------------------- FIREWORKS CONFIG
+fireworks.updateOptions({
+  acceleration: 1,
+  opacity: 1,
+  rocketSpawnInterval: 150,
+  numParticles: 200,
+  brightness: {
+    min:80,
+    max: 100,
+  },
+  decay: {
+    min: 0.010,
+    max: 0.02,
+  },
+  explosion: 10,
+  lineWidth: {
+    explosion: {
+      min: 3,
+      max: 3,
+    },
+    trace: {
+      min: 3,
+      max: 3,
+    }
+  }
+
+});
 
 //------------------------------- UTILS
 function getNearestFibonacci(number) {
@@ -197,7 +228,7 @@ function updateUserList() {
     removeUser.innerText = 'Expulsar';
 
     const userContent = `<div id="${user.id}" class="user-table">
-            <div id="userVoteCardTop" class="user-vote">${user.vote}</div>
+            <div id="userVoteCardTop" class="user-vote" ejem-ejem="no hagas trampas ¬_¬">${user.vote}</div>
             <div class="user-name" title="${user.user}">${truncate(user.user,
         20)} ${user.vote !== ''
         ? '<span class="vote-check">✓</span>'
@@ -260,7 +291,7 @@ function updateUserList() {
     removeUser.innerText = 'Expulsar';
 
     const userContent = `<div id="${user.id}" class="user-table">
-            <div id="userVoteCardLeft" class="user-vote">${user.vote}</div>
+            <div id="userVoteCardLeft" class="user-vote" ejem-ejem="no hagas trampas ¬_¬">${user.vote}</div>
             <div class="user-name" title="${user.user}">${truncate(user.user,
         20)} ${user.vote !== ''
         ? '<span class="vote-check">✓</span>'
@@ -321,7 +352,7 @@ function updateUserList() {
     removeUser.innerText = 'Expulsar';
 
     const userContent = `<div id="${user.id}" class="user-table">
-            <div id="userVoteCardRight" class="user-vote">${user.vote}</div>
+            <div id="userVoteCardRight" class="user-vote" ejem-ejem="no hagas trampas ¬_¬">${user.vote}</div>
             <div class="user-name" title="${user.user}">${truncate(user.user,
         20)} ${user.vote !== ''
         ? '<span class="vote-check">✓</span>'
@@ -382,7 +413,7 @@ function updateUserList() {
     removeUser.innerText = 'Expulsar';
 
     const userContent = `<div id="${user.id}" class="user-table">
-            <div id="userVoteCardBottom" class="user-vote">${user.vote}</div>
+            <div id="userVoteCardBottom" class="user-vote" ejem-ejem="no hagas trampas ¬_¬">${user.vote}</div>
             <div class="user-name" title="${user.user}">${truncate(user.user,
         20)} ${user.vote !== ''
         ? '<span class="vote-check">✓</span>'
@@ -451,6 +482,10 @@ function renderVoteWithCard(vote, count) {
 function renderVotesStats() {
   const {averageVotes, votes} = getStats();
 
+  if (votes.length === 1) {
+    lauchFireworks();
+  }
+
   votes.map(([vote, count]) => renderVoteWithCard(vote, count));
 
   const votesAverageContent = `<div class="votes-average-content">
@@ -459,6 +494,16 @@ function renderVotesStats() {
         </div>`;
 
   votesAverage.innerHTML = votesAverageContent;
+}
+
+function lauchFireworks() {
+  fireworks.start();
+  setTimeout(() => {
+    if (fireworks.running) {
+      fireworks.waitStop();
+      fireworks.launch(50);
+    }
+  }, 7000);
 }
 
 //------------------------------- CHECK DISPLAY
@@ -560,6 +605,7 @@ socket.on('reset', ({users, reveal}) => {
   winner = true;
   highest = 0;
   votesCount.innerHTML = '';
+  fireworks.waitStop();
   checkRevealButton();
   checkResetButton();
   checkUrlCopyDiv();
